@@ -96,6 +96,7 @@ function Login() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
+        credentials: 'include',
       })
 
       const data = await res.json()
@@ -113,7 +114,6 @@ function Login() {
           setFields({ name: '', email: '', password: '', confirm: '' })
           setIsSignup(false)
         } else {
-          localStorage.setItem('token', data.token)
           navigate('/')
         }
       }

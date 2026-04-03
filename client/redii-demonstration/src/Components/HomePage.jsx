@@ -4,8 +4,15 @@ import '../App.css'
 function HomePage() {
   const navigate = useNavigate()
 
-  const handleLogout = () => {
-    localStorage.removeItem('token')
+  const handleLogout = async () => {
+    try {
+      await fetch('http://localhost:3000/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      })
+    } catch {
+      // proceed with local logout even if request fails
+    }
     navigate('/login')
   }
 

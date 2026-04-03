@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import User from "../models/User.js";
 import rateLimitingLogin from "../middlewares/rateLimitingLogin.js";
+import authenticate from "../middlewares/authenticate.js";
 import redis from "../redis.js";
 
 dotenv.config();
@@ -95,6 +96,12 @@ authRouter.post("/login", rateLimitingLogin(), async (req, res) => {
 
     await redis.del(req.loginRateLimitKey || `login:${req.ip}`);
 
+    res.cookie("token", token, {
+      httpOnly: true,
+      sameSite: "lax",
+      maxAge: 24 * 60 * 60 * 1000, // 1 day in ms
+    });
+
     return res.status(200).json({
       message: "Login successful.",
       token,
@@ -113,5 +120,22 @@ authRouter.post("/login", rateLimitingLogin(), async (req, res) => {
     });
   }
 });
+
+
+authRouter.post("/logout", authenticate, async (req, res) => {
+    try {
+        res.cookie("token", "", {
+            httpOnly: true,
+            sameSite: "lax",
+            expires: new Date(0),
+        });
+        return res.status(200).json({ message: "Logout successful." });
+    } catch (err) {
+        console.error("Logout error:", err);
+        return res.status(500).json({ error: "Internal Server Error" });
+    }
+});
+
+
 
 export default authRouter;
