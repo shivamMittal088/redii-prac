@@ -1,6 +1,8 @@
+import "dotenv/config";
 import express from "express";
 import cookieParser from "cookie-parser";
 import corsMiddleware from "./cors.js";
+import sessionMiddleware from "./middlewares/redisSessionStorage.js";
 import productRouter from "./routes/products.js";
 import authRouter from "./routes/auth.js";
 import rateLimitingProducts from "./middlewares/rateLimitingProducts.js";
@@ -10,6 +12,7 @@ const app = express();
 
 app.use(corsMiddleware);
 app.use(cookieParser());
+app.use(sessionMiddleware);
 
 app.get("/", (req, res) => {
   res.send("Hello World!");

@@ -96,6 +96,12 @@ authRouter.post("/login", rateLimitingLogin(), async (req, res) => {
 
     await redis.del(req.loginRateLimitKey || `login:${req.ip}`);
 
+    req.session.user = { id: user._id, email: user.email, name: user.name };
+
+    await new Promise((resolve, reject) => {
+      req.session.save((err) => { if (err) reject(err); else resolve(); });
+    });
+
     res.cookie("token", token, {
       httpOnly: true,
       sameSite: "lax",
@@ -109,14 +115,9 @@ authRouter.post("/login", rateLimitingLogin(), async (req, res) => {
     });
     } 
     catch (err) {
-    console.error("Login error:", err);
-
-    const attempts = await redis.get(req.ip) || 0;
-
-
+    console.error("Login error:", err.message, err.stack);
     return res.status(500).json({ 
-        error: "Internal Server Error" ,
-        attempts,
+        error: "Internal Server Error",
     });
   }
 });
@@ -124,6 +125,9 @@ authRouter.post("/login", rateLimitingLogin(), async (req, res) => {
 
 authRouter.post("/logout", authenticate, async (req, res) => {
     try {
+        req.session.destroy((err) => {
+            if (err) console.error("Session destroy error:", err);
+        });
         res.cookie("token", "", {
             httpOnly: true,
             sameSite: "lax",
@@ -136,6 +140,61 @@ authRouter.post("/logout", authenticate, async (req, res) => {
     }
 });
 
+// GET /api/auth/sessions - list all active sessions (logged-in devices)
+authRouter.get("/sessions", authenticate, async (req, res) => {
+    try {
+        const keys = await redis.keys("session:*");
+        if (keys.length === 0) {
+            return res.status(200).json({ sessions: [] });
+        }
 
+        const values = await redis.mget(...keys);
+        const sessions = [];
+
+        for (let i = 0; i < keys.length; i++) {
+            if (!values[i]) continue;
+            try {
+                const data = JSON.parse(values[i]);
+                if (data.user) {
+                    // Extract session ID from key (strip "session:" prefix)
+                    const sid = keys[i].replace(/^session:/, "");
+                    sessions.push({
+                        sid,
+                        name: data.user.name,
+                        email: data.user.email,
+                        // Mark which session belongs to the current requester
+                        isCurrent: req.session.id === sid,
+                    });
+                }
+            } catch {
+                // skip malformed session entries
+            }
+        }
+
+        return res.status(200).json({ sessions });
+    } catch (err) {
+        console.error("Sessions list error:", err);
+        return res.status(500).json({ error: "Internal Server Error" });
+    }
+});
+
+// Logout all users - deletes every session:* key in Redis
+authRouter.post("/logout-all", authenticate, async (req, res) => {
+    try {
+        const keys = await redis.keys("session:*");
+        if (keys.length > 0) {
+            await redis.del(...keys);
+        }
+        res.cookie("token", "", {
+            httpOnly: true,
+            sameSite: "lax",
+            expires: new Date(0),
+        });
+        return res.status(200).json({ message: `Logged out ${keys.length} session(s).` });
+    } catch (err) {
+        console.error("Logout-all error:", err);
+        return res.status(500).json({ error: "Internal Server Error" });
+    }
+});
 
 export default authRouter;
