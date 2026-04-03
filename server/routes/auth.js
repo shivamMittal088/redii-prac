@@ -76,7 +76,11 @@ authRouter.post("/login", rateLimitingLogin(), async (req, res) => {
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      const attempts = parseInt(await redis.get(req.ip)) || 0;
+      const key = req.loginRateLimitKey || `login:${req.ip}`;
+      const attempts = await redis.incr(key);
+      if (attempts === 1) {
+        await redis.expire(key, process.env.REDIS_RATE_LIMIT_WINDOW);
+      }
       return res.status(401).json({
         error: "Invalid email or password.",
         attempts,
@@ -88,6 +92,8 @@ authRouter.post("/login", rateLimitingLogin(), async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN || "1d" },
     );
+
+    await redis.del(req.loginRateLimitKey || `login:${req.ip}`);
 
     return res.status(200).json({
       message: "Login successful.",

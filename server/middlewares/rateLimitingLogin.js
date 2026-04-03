@@ -6,20 +6,19 @@ dotenv.config();
 const rateLimitingLogin = ()=>{
     return async(req,res,next)=>{
         const ip = req.ip;
+        const key = `login:${ip}`;
         try{
-            const requestCount = await redis.incr(ip);
+            const requestCount = parseInt(await redis.get(key)) || 0;
 
-            // If first request → set expiry
-            if (requestCount === 1) {
-                await redis.expire(ip, process.env.REDIS_RATE_LIMIT_WINDOW);
-            }
-
-            if(requestCount > process.env.REDIS_RATE_LIMIT_REQUESTS_LOGIN){
-                console.log(`IP ${ip} has exceeded the rate limit.`);
+            if(requestCount >= process.env.REDIS_RATE_LIMIT_REQUESTS_LOGIN){
+                const ttl = await redis.ttl(key);
+                console.log(`IP ${ip} has exceeded the login rate limit.`);
                 return res.status(429).json({
-                    error: "Too many login attempts. Please try again later."
+                    error: "Too many login attempts. Please try again later.",
+                    ttl,
                 });
             }
+            req.loginRateLimitKey = key;
             next();
         } catch (err) {
             console.error("Error in rate limiting middleware:", err);

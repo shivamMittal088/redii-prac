@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import '../App.css'
 
@@ -46,6 +46,18 @@ function Login() {
   const [showConfirm, setShowConfirm] = useState(false)
   const MAX_LOGIN_ATTEMPTS = 5
   const [attemptsLeft, setAttemptsLeft] = useState(null)
+  const [retryAfter, setRetryAfter] = useState(null)
+
+  useEffect(() => {
+    if (!retryAfter || retryAfter <= 0) return
+    const timer = setInterval(() => {
+      setRetryAfter(s => {
+        if (s <= 1) { clearInterval(timer); return null }
+        return s - 1
+      })
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [retryAfter])
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -63,6 +75,7 @@ function Login() {
     setShowPassword(false)
     setShowConfirm(false)
     setAttemptsLeft(null)
+    setRetryAfter(null)
   }
 
   const handleSubmit = async (e) => {
@@ -91,8 +104,10 @@ function Login() {
         setServerError(data.error || 'Something went wrong.')
         const left = data.attempts != null ? Math.max(0, MAX_LOGIN_ATTEMPTS - data.attempts) : null
         setAttemptsLeft(left)
+        setRetryAfter(data.ttl > 0 ? data.ttl : (data.ttl != null ? 60 : null))
       } else {
         setAttemptsLeft(null)
+        setRetryAfter(null)
         if (isSignup) {
           setSuccess('Account created! You can now log in.')
           setFields({ name: '', email: '', password: '', confirm: '' })
@@ -189,8 +204,14 @@ function Login() {
           {!isSignup && attemptsLeft !== null && (
             <p className="attempts-info">
               {attemptsLeft === 0
-                ? 'No attempts left. Please wait 60s.'
+                ? 'No attempts left.'
                 : `${attemptsLeft} attempt${attemptsLeft === 1 ? '' : 's'} left.`}
+            </p>
+          )}
+
+          {!isSignup && retryAfter !== null && (
+            <p className="attempts-info">
+              Try again in {retryAfter}s.
             </p>
           )}
         </form>

@@ -6,6 +6,7 @@ dotenv.config();
 const rateLimitingProducts = ()=>{
     return async (req,res,next)=>{
         const ip = req.ip;
+        const key = `products:${ip}`;
         const currentTime = Math.floor(Date.now() / 1000)
         // const windowSize = process.env.REDIS_RATE_LIMIT || 60; // Default to 60 requests per minute
 
@@ -14,11 +15,11 @@ const rateLimitingProducts = ()=>{
         // }
 
         try{
-            const requestCount = await redis.incr(ip);
+            const requestCount = await redis.incr(key);
 
             // If first request → set expiry
             if (requestCount === 1) {
-                await redis.expire(ip, process.env.REDIS_RATE_LIMIT_WINDOW);
+                await redis.expire(key, process.env.REDIS_RATE_LIMIT_WINDOW);
             }
 
             console.log(`IP: ${ip}, Request Count: ${requestCount}`);
