@@ -1,16 +1,71 @@
-# React + Vite
+# Redii — Redis Caching Demonstration
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A full-stack demo app showcasing Redis caching with a Node.js/Express backend and a React + Vite frontend.
 
-Currently, two official plugins are available:
+## Project Structure
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+```
+redii/
+├── client/
+│   └── redii-demonstration/   # React + Vite frontend
+└── server/                    # Express backend
+    ├── app.js
+    ├── redis.js
+    └── routes/
+        └── products.js
+```
 
-## React Compiler
+## Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Frontend:** React 19, Vite
+- **Backend:** Node.js, Express 5
+- **Cache:** Redis (via ioredis)
+- **Dev tools:** Nodemon, dotenv
 
-## Expanding the ESLint configuration
+## Getting Started
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### Prerequisites
+
+- Node.js 18+
+- A Redis instance (local or cloud, e.g. Redis Cloud)
+
+### 1. Server setup
+
+```bash
+cd server
+npm install
+```
+
+Create a `.env` file in the `server/` directory:
+
+```env
+REDIS_HOST=your-redis-host
+REDIS_PORT=your-redis-port
+REDIS_USERNAME=default
+REDIS_PASSWORD=your-redis-password
+```
+
+Start the server (with auto-restart via nodemon):
+
+```bash
+npm start
+```
+
+Server runs on **http://localhost:3000**
+
+### 2. Client setup
+
+```bash
+cd client/redii-demonstration
+npm install
+npm run dev
+```
+
+Client runs on **http://localhost:5173**
+
+## API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/` | Health check |
+| GET | `/api/products` | Get all products |
