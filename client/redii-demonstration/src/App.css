@@ -44,6 +44,22 @@ body {
 .alert.error   { background: #fff0f0; color: #c0392b; border: 1px solid #f5c6c6; }
 .alert.success { background: #f0fff4; color: #1a7a3c; border: 1px solid #b7e4c7; }
 
+.attempts-left {
+  display: block;
+  font-size: 0.8rem;
+  margin-top: 0.3rem;
+  font-weight: 600;
+  opacity: 0.85;
+}
+
+.attempts-info {
+  text-align: center;
+  font-size: 0.82rem;
+  margin-top: 0.6rem;
+  color: #c0392b;
+  font-weight: 600;
+}
+
 .field {
   display: flex;
   flex-direction: column;

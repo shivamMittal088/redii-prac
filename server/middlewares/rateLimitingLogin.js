@@ -14,9 +14,11 @@ const rateLimitingLogin = ()=>{
                 await redis.expire(ip, process.env.REDIS_RATE_LIMIT_WINDOW);
             }
 
-            if(requestCount > process.env.REDIS_RATE_LIMIT_REQUESTS_lOGIN){
+            if(requestCount > process.env.REDIS_RATE_LIMIT_REQUESTS_LOGIN){
                 console.log(`IP ${ip} has exceeded the rate limit.`);
-                return res.status(429).json({error: "Too many login attempts. Please try again later."});
+                return res.status(429).json({
+                    error: "Too many login attempts. Please try again later."
+                });
             }
             next();
         } catch (err) {

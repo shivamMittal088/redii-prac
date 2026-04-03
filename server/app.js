@@ -1,4 +1,5 @@
 import express from "express";
+import corsMiddleware from "./cors.js";
 import productRouter from "./routes/products.js";
 import authRouter from "./routes/auth.js";
 import rateLimitingProducts from "./middlewares/rateLimitingProducts.js";
@@ -6,11 +7,11 @@ import connectDB from "./db.js";
 
 const app = express();
 
+app.use(corsMiddleware);
+
 app.get("/", (req, res) => {
   res.send("Hello World!");
 });
-
-app.set('json spaces', 2); // 👈 THIS LINE
 
 app.use(express.json());
 
